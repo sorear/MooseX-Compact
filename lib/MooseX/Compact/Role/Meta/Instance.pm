@@ -1,70 +1,86 @@
-
 package MooseX::Compact::Role::Meta::Instance;
 
 use Moose::Role;
 
-use Hash::Util::FieldHash::Compat qw(fieldhash);
-use Scalar::Util qw(refaddr weaken);
+use Scalar::Util qw(weaken);
+use Arena::Compact;
 use namespace::clean -except => 'meta';
 
 fieldhash our %attr;
 
-around create_instance => sub {
-  my $next = shift;
-  my $instance = shift->$next(@_);
-  $attr{refaddr $instance} = {};
-  return $instance;
-};
+sub _glob_for {
+    my $name = shift;
+
+    $name =~ s/([^0-9a-zA-Y_])/sprintf "Z%02X", ord($1)/eg;
+
+    return __PACKAGE__ . "::Key::" . $name;
+}
+
+sub _key_for : lvalue { # they've been experimental since 2000
+    no strict 'refs';
+
+    return ${ _glob_for(shift) };
+}
+
+sub BUILD {
+    my $self = shift;
+
+    # XXX doing anything per slot here is O(n^2).
+    for ($self->get_all_slots) {
+        _key_for($_) = Arena::Compact::key($_);
+    }
+}
+
+sub create_instance { Arena::Compact::new(); }
 
 sub get_slot_value {
-  my ($self, $instance, $slot_name) = @_;
+    my ($self, $instance, $slot_name) = @_;
 
-  return $attr{refaddr $instance}->{$slot_name};
+    no strict 'refs';
+    return Arena::Compact::get($instance, _key_for($slot_name));
 }
 
 sub set_slot_value {
-  my ($self, $instance, $slot_name, $value) = @_;
+    my ($self, $instance, $slot_name, $value) = @_;
 
-  return $attr{refaddr $instance}->{$slot_name} = $value;
+    no strict 'refs';
+    Arena::Compact::put($instance, _key_for($slot_name), $value);
 }
 
 sub deinitialize_slot {
-  my ($self, $instance, $slot_name) = @_;
-  return delete $attr{refaddr $instance}->{$slot_name};
+    die "incompletely initialized slots unimplemented"
 }
 
 sub deinitialize_all_slots {
-  my ($self, $instance) = @_;
-  $attr{refaddr $instance} = {};
+    die "incompletely initialized slots unimplemented"
 }
 
 sub is_slot_initialized {
-  my ($self, $instance, $slot_name) = @_;
-
-  return exists $attr{refaddr $instance}->{$slot_name};
+    die "incompletely initialized slots unimplemented"
 }
 
 sub weaken_slot_value {
-  my ($self, $instance, $slot_name) = @_;
-  weaken $attr{refaddr $instance}->{$slot_name};
+    die "weak references unimplemented"
 }
 
-around inline_create_instance => sub {
-  my $next = shift;
-  my ($self, $class_variable) = @_;
-  my $code = $self->$next($class_variable);
-  $code = "do { my \$instance = ($code);";
-  $code .= sprintf(
-    '$%s::attr{Scalar::Util::refaddr($instance)} = {};',
-    __PACKAGE__,
-  );
-  $code .= '$instance }';
-  return $code;
-};
+sub inline_create_instance {
+    my ($self, $class_variable) = @_;
+    return "bless (Arena::Compact::bnew()), $class_variable"
+}
 
 sub inline_slot_access {
-  my ($self, $instance, $slot_name) = @_;
-  die "lvalue hooks for Arena::Compact not implemented yet";
+    my ($self, $instance, $slot_name) = @_;
+    die "lvalue hooks for Arena::Compact not implemented yet";
+}
+
+sub inline_get_slot_value {
+    my ($self, $instance, $slot_name) = @_;
+    return "Arena::Compact::get($instance, \$" . _glob_for($slot_name) . ")";
+}
+
+sub inline_set_slot_value {
+    my ($self, $instance, $slot_name, $value) = @_;
+    return "Arena::Compact::put($instance, \$" . _glob_for($slot_name) . ", $value)";
 }
 
 1;
