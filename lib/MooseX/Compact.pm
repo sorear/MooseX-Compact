@@ -48,6 +48,8 @@ of the sister module, L<Arena::Compact>, for implementation details.
 This module will evolve as Arena::Compact does, and both modules are being
 heavily influenced by the requirements of the other.
 
+Both modules are very incomplete.
+
 =head1 BUGS
 
 No known bugs.
