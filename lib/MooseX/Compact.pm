@@ -17,7 +17,7 @@ sub init_meta {
   Moose->init_meta(%p);
   Moose::Util::MetaRole::apply_metaclass_roles(
     for_class                => $p{for_class},
-    instance_metaclass_roles => [ 'MooseX::InsideOut::Role::Meta::Instance' ],
+    instance_metaclass_roles => [ 'MooseX::Compact::Role::Meta::Instance' ],
   );
 }
 

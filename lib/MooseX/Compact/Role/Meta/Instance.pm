@@ -3,48 +3,33 @@ package MooseX::Compact::Role::Meta::Instance;
 use Moose::Role;
 
 use Scalar::Util qw(weaken);
-use Arena::Compact;
+use Arena::Compact -all => { prefix => 'b' };
 use namespace::clean -except => 'meta';
 
-fieldhash our %attr;
-
-sub _glob_for {
-    my $name = shift;
+sub _name_for {
+    my $oname = shift;
+    my $name = $oname;
 
     $name =~ s/([^0-9a-zA-Y_])/sprintf "Z%02X", ord($1)/eg;
+    $name = __PACKAGE__ . "::Key::" . $name;
+
+    { no strict 'refs'; ${$name} = bkey($oname); }
 
     return __PACKAGE__ . "::Key::" . $name;
 }
 
-sub _key_for : lvalue { # they've been experimental since 2000
-    no strict 'refs';
-
-    return ${ _glob_for(shift) };
-}
-
-sub BUILD {
-    my $self = shift;
-
-    # XXX doing anything per slot here is O(n^2).
-    for ($self->get_all_slots) {
-        _key_for($_) = Arena::Compact::key($_);
-    }
-}
-
-sub create_instance { Arena::Compact::new(); }
+sub create_instance { bnew(); }
 
 sub get_slot_value {
     my ($self, $instance, $slot_name) = @_;
 
-    no strict 'refs';
-    return Arena::Compact::get($instance, _key_for($slot_name));
+    return bget($instance, bkey($slot_name));
 }
 
 sub set_slot_value {
     my ($self, $instance, $slot_name, $value) = @_;
 
-    no strict 'refs';
-    Arena::Compact::put($instance, _key_for($slot_name), $value);
+    bput($instance, bkey($slot_name), $value);
 }
 
 sub deinitialize_slot {
@@ -65,7 +50,7 @@ sub weaken_slot_value {
 
 sub inline_create_instance {
     my ($self, $class_variable) = @_;
-    return "bless (Arena::Compact::bnew()), $class_variable"
+    return "bless (Arena::Compact::new(), $class_variable)"
 }
 
 sub inline_slot_access {
@@ -75,12 +60,12 @@ sub inline_slot_access {
 
 sub inline_get_slot_value {
     my ($self, $instance, $slot_name) = @_;
-    return "Arena::Compact::get($instance, \$" . _glob_for($slot_name) . ")";
+    return "Arena::Compact::get($instance, \$" . _name_for($slot_name) . ")";
 }
 
 sub inline_set_slot_value {
     my ($self, $instance, $slot_name, $value) = @_;
-    return "Arena::Compact::put($instance, \$" . _glob_for($slot_name) . ", $value)";
+    return "Arena::Compact::put($instance, \$" . _name_for($slot_name) . ", $value)";
 }
 
 1;
