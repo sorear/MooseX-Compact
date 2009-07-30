@@ -41,7 +41,7 @@ is(Foo->new(attr2 => 2)->attr2, 2, "inline reader works");
 {
     my $foo = Foo->new;
     $foo->attr3(42);
-    is(Foo->new->attr3, 42, "inline writer works");
+    is($foo->attr3, 42, "inline writer works");
 }
 
 Foo->meta->make_immutable;

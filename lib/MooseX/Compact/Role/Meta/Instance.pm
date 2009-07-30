@@ -18,7 +18,7 @@ sub _name_for {
     return $name;
 }
 
-sub create_instance { bnew(); }
+sub create_instance { bless bnew(), shift->_class_name; }
 
 sub get_slot_value {
     my ($self, $instance, $slot_name) = @_;
