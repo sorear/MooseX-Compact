@@ -33,15 +33,17 @@ sub set_slot_value {
 }
 
 sub deinitialize_slot {
-    die "incompletely initialized slots unimplemented"
+    my ($self, $instance, $slot_name) = @_;
+
+    bdelete($instance, bkey($slot_name));
 }
 
-sub deinitialize_all_slots {
-    die "incompletely initialized slots unimplemented"
-}
+sub initialize_slot {}
 
 sub is_slot_initialized {
-    die "incompletely initialized slots unimplemented"
+    my ($self, $instance, $slot_name) = @_;
+
+    return bexists($instance, bkey($slot_name));
 }
 
 sub weaken_slot_value {
@@ -66,6 +68,16 @@ sub inline_get_slot_value {
 sub inline_set_slot_value {
     my ($self, $instance, $slot_name, $value) = @_;
     return "Arena::Compact::put($instance, \$" . _name_for($slot_name) . ", $value)";
+}
+
+sub inline_deinitialize_slot {
+    my ($self, $instance, $slot_name) = @_;
+    return "Arena::Compact::delete($instance, \$" . _name_for($slot_name) . ")";
+}
+
+sub inline_is_slot_initialized {
+    my ($self, $instance, $slot_name) = @_;
+    return "Arena::Compact::exists($instance, \$" . _name_for($slot_name) . ")";
 }
 
 1;

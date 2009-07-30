@@ -1,7 +1,7 @@
 # We assume the underlying module works; any tests should go _there_
 use warnings;
 use strict;
-use Test::More tests => 6;
+use Test::More tests => 8;
 
 {
     package Foo;
@@ -42,6 +42,20 @@ is(Foo->new(attr2 => 2)->attr2, 2, "inline reader works");
     my $foo = Foo->new;
     $foo->attr3(42);
     is($foo->attr3, 42, "inline writer works");
+}
+
+{
+    package Foo;
+
+    has attr4 => ( is => 'rw', predicate => 'has_a4', clearer => 'zap_a4' );
+}
+
+{
+    my $foo = Foo->new;
+    $foo->attr4(42);
+    is($foo->has_a4, 1, "inline is_slot_initialized works");
+    $foo->zap_a4;
+    ok(!$foo->has_a4, "inline deinitialize_slot works");
 }
 
 Foo->meta->make_immutable;
