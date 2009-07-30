@@ -15,7 +15,7 @@ sub _name_for {
 
     { no strict 'refs'; ${$name} = bkey($oname); }
 
-    return __PACKAGE__ . "::Key::" . $name;
+    return $name;
 }
 
 sub create_instance { bnew(); }
