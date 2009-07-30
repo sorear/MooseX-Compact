@@ -3,7 +3,7 @@ package MooseX::Compact::Role::Meta::Instance;
 use Moose::Role;
 
 use Scalar::Util qw(weaken);
-use Arena::Compact -all => { prefix => 'b' };
+use Arena::Compact -all => { -prefix => 'b' };
 use namespace::clean -except => 'meta';
 
 sub _name_for {
