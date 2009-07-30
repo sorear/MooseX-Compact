@@ -38,6 +38,8 @@ MooseX::Compact - Moose backend which sacrifices speed for space efficiency
 
 =head1 DESCRIPTION
 
+B<THIS IS PRERELEASE SOFTWARE.  IT MAY EAT YOUR DATA.  YOU HAVE BEEN WARNED.>
+
 When Perl is faced with a time/space tradeoff, it almost always throws memory
 at the problem.  This module allows you to store objects in a more compact
 form, off the Perl heap, at a small cost in performance.  See the documentation
